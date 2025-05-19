@@ -26,6 +26,7 @@ for node in initial_infected_nodes:
 
 # Simulation
 simulation_data = []  # To store data for real-time visualization
+daily_network_states = []  # To store node states for each day
 
 susceptible_count = []
 infected_count = []
@@ -63,12 +64,21 @@ for day in range(days):
         "susceptible": susceptible_count[-1],
         "infected": infected_count[-1],
         "recovered": recovered_count[-1],
+    })
+
+    # Store daily network state
+    daily_network_states.append({
+        "day": day,
         "node_states": {node: node_states[node] for node in G.nodes()}
     })
 
 # Save simulation data to JSON
 with open("simulation_data.json", "w") as f:
     json.dump(simulation_data, f)
+
+# Save daily network states to JSON
+with open("daily_network_states.json", "w") as f:
+    json.dump(daily_network_states, f)
 
 # Visualization of the network
 color_map = {'S': 'green', 'I': 'red', 'R': 'blue'}

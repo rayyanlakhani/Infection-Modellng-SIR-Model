@@ -5,12 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SIR Model Real-Time Visualization</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <style>
       #chartContainer {
         max-width: 1200px;
         margin: 40px auto;
       }
       canvas {
+        width: 100%;
+        height: 600px;
+      }
+      #networkContainer {
+        max-width: 1200px;
+        margin: 40px auto;
+        text-align: center;
+      }
+      svg {
         width: 100%;
         height: 600px;
       }
@@ -21,7 +31,15 @@
     <div id="chartContainer">
       <canvas id="sirChart"></canvas>
     </div>
+    <div id="networkContainer">
+      <h2>Network Visualization (Day-by-Day)</h2>
+      <button id="prevDay">Previous Day</button>
+      <span id="currentDay">Day 0</span>
+      <button id="nextDay">Next Day</button>
+      <svg id="networkGraph"></svg>
+    </div>
     <script>
+      // Load simulation data for the chart
       fetch("simulation_data.json")
         .then((response) => response.json())
         .then((data) => {
@@ -69,6 +87,111 @@
               },
             },
           });
+        });
+
+      // Load daily network states for the graph
+      fetch("daily_network_states.json")
+        .then((response) => response.json())
+        .then((networkData) => {
+          const svg = d3.select("#networkGraph");
+          const width = svg.node().getBoundingClientRect().width;
+          const height = svg.node().getBoundingClientRect().height;
+
+          const simulation = d3
+            .forceSimulation()
+            .force(
+              "link",
+              d3
+                .forceLink()
+                .id((d) => d.id)
+                .distance(50)
+            )
+            .force("charge", d3.forceManyBody().strength(-100))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+          let currentDay = 0;
+
+          function updateNetwork(day) {
+            const dayData = networkData.find((d) => d.day === day);
+            if (!dayData) return;
+
+            document.getElementById("currentDay").textContent = `Day ${day}`;
+
+            const nodes = Object.keys(dayData.node_states).map((id) => ({
+              id,
+              state: dayData.node_states[id],
+            }));
+
+            const links = []; // Add logic to define links if needed
+
+            svg.selectAll("*").remove();
+
+            const link = svg
+              .append("g")
+              .selectAll("line")
+              .data(links)
+              .enter()
+              .append("line")
+              .attr("stroke", "#999")
+              .attr("stroke-opacity", 0.6);
+
+            const node = svg
+              .append("g")
+              .selectAll("circle")
+              .data(nodes)
+              .enter()
+              .append("circle")
+              .attr("r", 5)
+              .attr("fill", (d) =>
+                d.state === "S" ? "green" : d.state === "I" ? "red" : "blue"
+              )
+              .call(
+                d3
+                  .drag()
+                  .on("start", (event, d) => {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
+                  })
+                  .on("drag", (event, d) => {
+                    d.fx = event.x;
+                    d.fy = event.y;
+                  })
+                  .on("end", (event, d) => {
+                    if (!event.active) simulation.alphaTarget(0);
+                    d.fx = null;
+                    d.fy = null;
+                  })
+              );
+
+            simulation.nodes(nodes).on("tick", () => {
+              node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+              link
+                .attr("x1", (d) => d.source.x)
+                .attr("y1", (d) => d.source.y)
+                .attr("x2", (d) => d.target.x)
+                .attr("y2", (d) => d.target.y);
+            });
+
+            simulation.force("link").links(links);
+            simulation.alpha(1).restart();
+          }
+
+          document.getElementById("prevDay").addEventListener("click", () => {
+            if (currentDay > 0) {
+              currentDay--;
+              updateNetwork(currentDay);
+            }
+          });
+
+          document.getElementById("nextDay").addEventListener("click", () => {
+            if (currentDay < networkData.length - 1) {
+              currentDay++;
+              updateNetwork(currentDay);
+            }
+          });
+
+          updateNetwork(currentDay);
         });
     </script>
   </body>
