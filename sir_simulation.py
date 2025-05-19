@@ -4,8 +4,8 @@ import random
 import json
 
 # Parameters
-N = 5000  # Number of nodes (city population)
-k = 10  # Average degree
+N = 100  # Number of nodes (city population)
+k = 7  # Average degree
 p = 0.1  # Rewiring probability
 beta = 0.03  # Transmission probability
 recovery_days = 14  # Days to recover
@@ -80,13 +80,36 @@ with open("simulation_data.json", "w") as f:
 with open("daily_network_states.json", "w") as f:
     json.dump(daily_network_states, f)
 
-# Visualization of the network
+# Visualization of the network (final state)
 color_map = {'S': 'green', 'I': 'red', 'R': 'blue'}
 node_colors = [color_map[node_states[node]] for node in G.nodes()]
-pos = nx.spring_layout(G)  # Force-directed graph layout
-plt.figure(figsize=(12, 8))
-nx.draw(G, pos, node_color=node_colors, with_labels=False, node_size=10)
-plt.title('Social Network Visualization with Infection States')
+pos = nx.spring_layout(G, seed=42)  # Force-directed graph layout with fixed seed for consistency
+plt.figure(figsize=(14, 10))
+nx.draw(
+    G,
+    pos,
+    node_color=node_colors,
+    with_labels=False,
+    node_size=20,
+    edge_color="gray",
+    alpha=0.7
+)
+plt.title('Social Network Visualization with Infection States (Final Day)', fontsize=16)
+plt.show()
+
+# Visualization of the network (initial state)
+initial_node_colors = ['red' if node in initial_infected_nodes else 'green' for node in G.nodes()]
+plt.figure(figsize=(14, 10))
+nx.draw(
+    G,
+    pos,
+    node_color=initial_node_colors,
+    with_labels=False,
+    node_size=20,
+    edge_color="gray",
+    alpha=0.7
+)
+plt.title('Social Network Visualization with Initial Infection', fontsize=16)
 plt.show()
 
 # Plot infection curve
