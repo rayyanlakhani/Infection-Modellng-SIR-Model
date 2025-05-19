@@ -7,22 +7,62 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <style>
-      #chartContainer {
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+        color: #333;
+      }
+      h1 {
+        text-align: center;
+        margin-top: 20px;
+        color: #444;
+      }
+      #chartContainer,
+      #networkContainer {
         max-width: 1200px;
         margin: 40px auto;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
       }
       canvas {
         width: 100%;
         height: 600px;
       }
       #networkContainer {
-        max-width: 1200px;
-        margin: 40px auto;
         text-align: center;
       }
       svg {
         width: 100%;
         height: 600px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .controls {
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        transition: background-color 0.3s ease;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
       }
     </style>
   </head>
@@ -33,9 +73,12 @@
     </div>
     <div id="networkContainer">
       <h2>Network Visualization (Day-by-Day)</h2>
-      <button id="prevDay">Previous Day</button>
-      <span id="currentDay">Day 0</span>
-      <button id="nextDay">Next Day</button>
+      <div class="controls">
+        <button id="prevDay">Previous Day</button>
+        <span id="currentDay">Day 0</span>
+        <button id="nextDay">Next Day</button>
+        <button id="togglePanZoom">Enable Pan & Zoom</button>
+      </div>
       <svg id="networkGraph"></svg>
     </div>
     <script>
@@ -47,6 +90,7 @@
           const susceptibleData = data.map((entry) => entry.susceptible);
           const infectedData = data.map((entry) => entry.infected);
           const recoveredData = data.map((entry) => entry.recovered);
+          const deadData = data.map((entry) => entry.dead);
 
           const ctx = document.getElementById("sirChart").getContext("2d");
           new Chart(ctx, {
@@ -72,18 +116,19 @@
                   borderColor: "blue",
                   fill: false,
                 },
+                {
+                  label: "Dead",
+                  data: deadData,
+                  borderColor: "black",
+                  fill: false,
+                },
               ],
             },
             options: {
               responsive: true,
               plugins: {
-                legend: {
-                  position: "top",
-                },
-                title: {
-                  display: true,
-                  text: "SIR Model Simulation",
-                },
+                legend: { position: "top" },
+                title: { display: true, text: "SIR Model Simulation" },
               },
             },
           });
@@ -97,6 +142,7 @@
           const width = svg.node().getBoundingClientRect().width;
           const height = svg.node().getBoundingClientRect().height;
 
+          const svgGroup = svg.append("g");
           const simulation = d3
             .forceSimulation()
             .force(
@@ -105,11 +151,31 @@
                 .forceLink()
                 .id((d) => d.id)
                 .distance(100)
-            ) // Increased distance to 100
-            .force("charge", d3.forceManyBody().strength(-50)) // Reduced repulsion strength to -50
+            )
+            .force("charge", d3.forceManyBody().strength(-50))
             .force("center", d3.forceCenter(width / 2, height / 2));
 
           let currentDay = 0;
+          let panZoomEnabled = false;
+
+          const zoom = d3.zoom().on("zoom", (event) => {
+            svgGroup.attr("transform", event.transform);
+          });
+
+          document
+            .getElementById("togglePanZoom")
+            .addEventListener("click", () => {
+              panZoomEnabled = !panZoomEnabled;
+              if (panZoomEnabled) {
+                svg.call(zoom);
+                document.getElementById("togglePanZoom").textContent =
+                  "Disable Pan & Zoom";
+              } else {
+                svg.on(".zoom", null); // Disable zoom
+                document.getElementById("togglePanZoom").textContent =
+                  "Enable Pan & Zoom";
+              }
+            });
 
           function updateNetwork(day) {
             const dayData = networkData.find((d) => d.day === day);
@@ -122,11 +188,14 @@
               state: dayData.node_states[id],
             }));
 
-            const links = []; // Add logic to define links if needed
+            const links = [];
+            for (let i = 0; i < nodes.length - 1; i++) {
+              links.push({ source: nodes[i].id, target: nodes[i + 1].id });
+            }
 
-            svg.selectAll("*").remove();
+            svgGroup.selectAll("*").remove();
 
-            const link = svg
+            const link = svgGroup
               .append("g")
               .selectAll("line")
               .data(links)
@@ -135,7 +204,7 @@
               .attr("stroke", "#999")
               .attr("stroke-opacity", 0.6);
 
-            const node = svg
+            const node = svgGroup
               .append("g")
               .selectAll("circle")
               .data(nodes)
@@ -143,7 +212,13 @@
               .append("circle")
               .attr("r", 5)
               .attr("fill", (d) =>
-                d.state === "S" ? "green" : d.state === "I" ? "red" : "blue"
+                d.state === "S"
+                  ? "green"
+                  : d.state === "I"
+                  ? "red"
+                  : d.state === "R"
+                  ? "blue"
+                  : "black"
               )
               .call(
                 d3
