@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SIR Model Real-Time Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      canvas {
+        max-width: 800px;
+        margin: 20px auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SIR Model Real-Time Visualization</h1>
+    <canvas id="sirChart"></canvas>
+    <script>
+      fetch("simulation_data.json")
+        .then((response) => response.json())
+        .then((data) => {
+          const labels = data.map((entry) => `Day ${entry.day}`);
+          const susceptibleData = data.map((entry) => entry.susceptible);
+          const infectedData = data.map((entry) => entry.infected);
+          const recoveredData = data.map((entry) => entry.recovered);
+
+          const ctx = document.getElementById("sirChart").getContext("2d");
+          new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Susceptible",
+                  data: susceptibleData,
+                  borderColor: "green",
+                  fill: false,
+                },
+                {
+                  label: "Infected",
+                  data: infectedData,
+                  borderColor: "red",
+                  fill: false,
+                },
+                {
+                  label: "Recovered",
+                  data: recoveredData,
+                  borderColor: "blue",
+                  fill: false,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: "top",
+                },
+                title: {
+                  display: true,
+                  text: "SIR Model Simulation",
+                },
+              },
+            },
+          });
+        });
+    </script>
+  </body>
+</html>
