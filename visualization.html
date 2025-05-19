@@ -6,15 +6,21 @@
     <title>SIR Model Real-Time Visualization</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+      #chartContainer {
+        max-width: 1200px;
+        margin: 40px auto;
+      }
       canvas {
-        max-width: 800px;
-        margin: 20px auto;
+        width: 100%;
+        height: 600px;
       }
     </style>
   </head>
   <body>
     <h1>SIR Model Real-Time Visualization</h1>
-    <canvas id="sirChart"></canvas>
+    <div id="chartContainer">
+      <canvas id="sirChart"></canvas>
+    </div>
     <script>
       fetch("simulation_data.json")
         .then((response) => response.json())
