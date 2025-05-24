@@ -5,13 +5,13 @@ import json
 
 # Parameters
 N = 500  # Number of nodes (city population)
-k = 7  # Average degree
+k = 4  # Average degree
 p = 0.1  # Rewiring probability
 beta = 0.05  # Transmission probability
 recovery_days = 14  # Days to recover
 initial_infected = 50  # Initial number of infected nodes
-days = 365  # Simulation duration
-death_rate = 0.05  # Probability of death for infected individuals
+days = 50  # Simulation duration
+#death_rate = 0.05  # Probability of death for infected individuals
 
 # Generate Watts-Strogatz small-world network
 G = nx.watts_strogatz_graph(N, k, p)
@@ -36,7 +36,7 @@ recovered_count = []
 for day in range(days):
     new_infections = []
     new_recoveries = []
-    new_deaths = []
+    # new_deaths = []
 
     for node in G.nodes():
         if node_states[node] == 'I':
@@ -47,9 +47,9 @@ for day in range(days):
             # Increment days infected
             days_infected[node] += 1
             # Check for death
-            if random.random() < death_rate:
-                new_deaths.append(node)
-            elif days_infected[node] >= recovery_days:
+            # if random.random() < death_rate:
+            #     new_deaths.append(node)
+            if days_infected[node] >= recovery_days:
                 new_recoveries.append(node)
 
     # Update states
@@ -57,8 +57,8 @@ for day in range(days):
         node_states[node] = 'I'
     for node in new_recoveries:
         node_states[node] = 'R'
-    for node in new_deaths:
-        node_states[node] = 'D'
+    # for node in new_deaths:
+    #     node_states[node] = 'D'
 
     # Track counts
     susceptible_count.append(sum(1 for state in node_states.values() if state == 'S'))

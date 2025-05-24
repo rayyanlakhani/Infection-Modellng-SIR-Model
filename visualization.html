@@ -90,7 +90,7 @@
           const susceptibleData = data.map((entry) => entry.susceptible);
           const infectedData = data.map((entry) => entry.infected);
           const recoveredData = data.map((entry) => entry.recovered);
-          const deadData = data.map((entry) => entry.dead);
+          // const deadData = data.map((entry) => entry.dead);
 
           const ctx = document.getElementById("sirChart").getContext("2d");
           new Chart(ctx, {
@@ -116,12 +116,12 @@
                   borderColor: "blue",
                   fill: false,
                 },
-                {
-                  label: "Dead",
-                  data: deadData,
-                  borderColor: "black",
-                  fill: false,
-                },
+                // {
+                //   label: "Dead",
+                //   data: deadData,
+                //   borderColor: "black",
+                //   fill: false,
+                // },
               ],
             },
             options: {
