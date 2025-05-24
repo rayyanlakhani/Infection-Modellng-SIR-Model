@@ -82,7 +82,7 @@
       <svg id="networkGraph"></svg>
     </div>
     <script>
-      // Load simulation data for the chart
+      
       fetch("simulation_data.json")
         .then((response) => response.json())
         .then((data) => {
@@ -90,7 +90,7 @@
           const susceptibleData = data.map((entry) => entry.susceptible);
           const infectedData = data.map((entry) => entry.infected);
           const recoveredData = data.map((entry) => entry.recovered);
-          // const deadData = data.map((entry) => entry.dead);
+      
 
           const ctx = document.getElementById("sirChart").getContext("2d");
           new Chart(ctx, {
@@ -134,7 +134,7 @@
           });
         });
 
-      // Load daily network states for the graph
+      
       fetch("daily_network_states.json")
         .then((response) => response.json())
         .then((networkData) => {
